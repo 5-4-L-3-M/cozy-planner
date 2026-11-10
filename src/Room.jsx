@@ -760,6 +760,23 @@ export default function Room({ settings, update, children, header, deps }) {
     save({ theme: key, v: 3, look: {}, ...(keep ? {} : { items: starter(key) }) });
     if (settings.shelfColor == null || !keep) update({ shelfColor: THEMES[key].shelf });
   };
+  // Your own saved rooms (everything: style, colors, window, decor, bookshelf spot).
+  const saves = settings.roomSaves || [];
+  const saveRoom = () => {
+    const name = prompt('Name this room:', `${THEMES[th]?.name || 'My'} room ${saves.length + 1}`);
+    if (!name) return;
+    const snap = { ...room, items: upgradeOld(room), v: 3 };
+    update((s) => ({ roomSaves: [...(s.roomSaves || []), { id: 's' + Date.now().toString(36), name: name.slice(0, 40), at: Date.now(), room: snap, shelfColor: s.shelfColor }] }));
+  };
+  const loadRoom = (sv) => {
+    if (!confirm(`Load “${sv.name}”?\n\nYour current room will be replaced — save it first if you want to keep it.`)) return;
+    hist.current = [];
+    update({ room: { ...sv.room }, ...(sv.shelfColor ? { shelfColor: sv.shelfColor } : {}) });
+    setSel(null);
+  };
+  const renameRoom = (sv) => { const n = prompt('Rename this room:', sv.name); if (n) update((s) => ({ roomSaves: (s.roomSaves || []).map((x) => (x.id === sv.id ? { ...x, name: n.slice(0, 40) } : x)) })); };
+  const overwriteRoom = (sv) => { if (confirm(`Replace “${sv.name}” with how your room looks right now?`)) update((s) => ({ roomSaves: (s.roomSaves || []).map((x) => (x.id === sv.id ? { ...x, at: Date.now(), room: { ...room, items: upgradeOld(room), v: 3 }, shelfColor: s.shelfColor } : x)) })); };
+  const deleteRoom = (sv) => { if (confirm(`Delete the saved room “${sv.name}”? This can’t be undone.`)) update((s) => ({ roomSaves: (s.roomSaves || []).filter((x) => x.id !== sv.id) })); };
   const addDecor = (k) => {
     const d = D(k), id = 'd' + Date.now().toString(36);
     const a = isStrand(k) ? { t: 'case' } : d.where === 'wall' ? { t: 'wall', x: 930, y: 60 } : d.where === 'floor' ? { t: 'floor', x: 930, y: 0 } : { t: 'row', r: 0, x: 0.9, y: 0 };
@@ -935,6 +952,22 @@ export default function Room({ settings, update, children, header, deps }) {
                   </button>
                 ))}
                 {th && <button className="rtheme" onClick={() => { save({ theme: null }); }}><span className="rthumb plain" /><small>Plain (no room)</small></button>}
+              </div>
+              <div className="lbl rlbl">MY SAVED ROOMS</div>
+              <div className="rsaves">
+                {saves.map((sv) => { const L = { ...(THEMES[sv.room?.theme] || {}), ...Object.fromEntries(Object.entries(sv.room?.look || {}).filter(([, v]) => v != null)) }; return (
+                  <div key={sv.id} className="rsave">
+                    <button className="rsavemain" onClick={() => loadRoom(sv)} title="Load this room">
+                      <span className={'rthumb p-' + (L.pat || 'none')} style={{ '--wall': L.wall, '--floor': L.floor }}><i style={{ background: sv.shelfColor || L.shelf }} /><b style={{ background: L.curtain }} /></span>
+                      <span className="rsavetxt"><b>{sv.name}</b><small>{(sv.room?.items || []).length} decor · {new Date(sv.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</small></span>
+                    </button>
+                    <button className="mini" onClick={() => overwriteRoom(sv)} title="Update this save to match your room now">Update</button>
+                    <button className="mini" onClick={() => renameRoom(sv)} aria-label={'Rename ' + sv.name}>✎</button>
+                    <button className="mini" onClick={() => deleteRoom(sv)} aria-label={'Delete ' + sv.name}>✕</button>
+                  </div>
+                ); })}
+                {th && <button className="btn" onClick={saveRoom}>＋ Save this room</button>}
+                {!saves.length && <small style={{ opacity: 0.7 }}>Save your room to switch between looks anytime — seasonal rooms, cozy vs. tidy, whatever you like.</small>}
               </div>
               <div className="rlook">
                 <div className="lbl rlbl">BOOKSHELF</div>

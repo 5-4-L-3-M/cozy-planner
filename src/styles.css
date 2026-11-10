@@ -1099,3 +1099,12 @@ select{background:#2c2a28;border:1px solid #4a4540;border-radius:10px;height:34p
   .rselbar .mini{white-space:nowrap}
   .rselhint{display:none}
 }
+.rsaves{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.rsave{display:flex;align-items:center;gap:5px}
+.rsavemain{flex:1;display:flex;align-items:center;gap:10px;min-width:0;background:#2c2a28;border:1px solid #3c3833;border-radius:12px;padding:5px 8px;color:inherit;text-align:left;cursor:pointer}
+.rsavemain:hover{border-color:#7f9a74}
+.rsavemain .rthumb{width:46px;height:34px;flex-shrink:0}
+.rsavemain .rthumb i{width:20px;height:20px;top:6px}
+.rsavetxt{display:flex;flex-direction:column;min-width:0}
+.rsavetxt b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.rsavetxt small{opacity:.65;font-size:12px}
