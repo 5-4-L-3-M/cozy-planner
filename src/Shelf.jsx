@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { stOf } from './StickerLibrary';
+import { stOf, matches, packItem } from './StickerLibrary';
 import { sb } from './supabase';
 import { useSettings } from './store';
 import Charm, { BookCharm, CHARMS, mix } from './Charm';
@@ -67,13 +67,15 @@ export function Cover({ b, big, edit }) {
 }
 
 // Decorate screen: drag the label, add stickers to the front or spine, move/resize/turn them.
-function Decorate({ user, b, onDone, onClose }) {
+export function Decorate({ user, b, onDone, onClose }) {
   const [dec, setDec] = useState(() => ({ front: [], spine: [], ...(b.decor || {}) }));
   const [side, setSide] = useState('front');
   const [sel, setSel] = useState(null);
   const [pick, setPick] = useState(false);
-  const [pack, setPack] = useState(PACKS[0].name);
+  const [pack, setPack] = useState('all');
+  const [q, setQ] = useState('');
   const [stickers] = useStickers(user);
+  const [settings] = useSettings(user);
   const list = dec[side] || [];
   const cur = list.find((d) => d.id === sel);
   const setList = (fn) => setDec((d) => ({ ...d, [side]: fn(d[side] || []) }));
@@ -96,6 +98,13 @@ function Decorate({ user, b, onDone, onClose }) {
   };
   const preview = { ...b, decor: dec };
   const mine = stickers;
+  // Sticker picker: All, the built-in packs, then your own folders (in your order). Search looks inside the folder you're in.
+  const order = settings.stickerCatOrder || [];
+  const myCats = [...new Set(mine.map((s) => s.category || 'My stickers'))].sort((a, c) => (order.indexOf(a) + 1 || 999) - (order.indexOf(c) + 1 || 999));
+  const packPool = (p) => p.items.map((k) => packItem(k, p.name));
+  const pool = pack === 'all' ? [...mine, ...PACKS.flatMap(packPool)] : pack.startsWith('my:') ? mine.filter((s) => (s.category || 'My stickers') === pack.slice(3)) : packPool(PACKS.find((p) => p.name === pack) || PACKS[0]);
+  const found = q.trim() ? pool.filter((s) => matches(s, q)) : pool;
+  const LIMIT = 240, shown = found.slice(0, LIMIT);
   return (
     <>
       <div className="sheet-bg" />
@@ -106,12 +115,14 @@ function Decorate({ user, b, onDone, onClose }) {
             <button className={side === 'spine' ? 'on' : ''} onClick={() => { setSide('spine'); setSel(null); }}>Spine</button>
           </div>
         </div>
+        <div className="declayout"><div className="decleft">
         <p className="hint">Drag the label or a sticker to move it. Tap a sticker for size, turn and delete.</p>
         <div className="decstage" onPointerDown={(e) => { if (e.target === e.currentTarget) setSel(null); }}>
           {side === 'front'
             ? <div className="decfront"><Cover b={preview} big edit={edit} /></div>
             : <div className="decspine"><Spine b={preview} edit={edit} /></div>}
         </div>
+        </div><div className="decright">
         {cur ? (
           <div className="prow decctl">
             <button className="mini" onClick={() => patch(cur.id, { s: Math.max(6, cur.s / 1.15) })}>Smaller</button>
@@ -136,19 +147,20 @@ function Decorate({ user, b, onDone, onClose }) {
         )}
         {pick && (
           <div className="decpick">
-            <div className="catrow">
+            <input className="decsearch" value={q} onChange={(e) => setQ(e.target.value)} placeholder={pack === 'all' ? 'Search all stickers (name, color, style…)' : 'Search this folder…'} aria-label="Search stickers" />
+            <div className="catrow wrap">
+              <button className={'catchip' + (pack === 'all' ? ' on' : '')} onClick={() => setPack('all')}>All</button>
+              {myCats.map((c) => <button key={'my:' + c} className={'catchip mine' + (pack === 'my:' + c ? ' on' : '')} onClick={() => setPack('my:' + c)}>{c}</button>)}
               {PACKS.map((p) => <button key={p.name} className={'catchip' + (pack === p.name ? ' on' : '')} onClick={() => setPack(p.name)}>{p.name}</button>)}
-              {mine.length > 0 && <button className={'catchip' + (pack === 'mine' ? ' on' : '')} onClick={() => setPack('mine')}>My stickers</button>}
             </div>
             <div className="stgrid">
-              {pack !== 'mine' && (PACKS.find((p) => p.name === pack)?.items || []).map((k) => (
-                <button key={k} className="sttile" onClick={() => add({ src: 'pack', key: k })} aria-label={k}><Art st={{ src: 'pack', key: k }} /></button>
-              ))}
-              {pack === 'mine' && mine.map((s) => {
+              {shown.map((s, i) => {
                 const st = stOf(s);
-                return <button key={s.id} className="sttile" onClick={() => add(st, (s.h || 1) / (s.w || 1))} aria-label="Sticker"><Art st={st} /></button>;
+                return <button key={s.id + ':' + i} className="sttile" onClick={() => add(st, s.pack ? 1 : (s.h || 1) / (s.w || 1))} aria-label={s.name || s.data?.name || 'Sticker'} title={s.name || s.data?.name || ''}><Art st={st} /></button>;
               })}
             </div>
+            {!found.length && <p className="hint">No stickers match “{q}”{pack !== 'all' ? ' in this folder — try All' : ''}.</p>}
+            {found.length > LIMIT && <p className="hint">Showing {LIMIT} of {found.length} — search to narrow it down.</p>}
           </div>
         )}
         <div className="prow" style={{ marginTop: 14 }}>
@@ -157,6 +169,7 @@ function Decorate({ user, b, onDone, onClose }) {
           <button className="mini" onClick={onClose}>Cancel</button>
           <button className="btn primary" onClick={() => { onDone(dec); onClose(); }}>Done</button>
         </div>
+        </div></div>
       </section>
     </>
   );

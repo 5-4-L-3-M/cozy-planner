@@ -1108,3 +1108,15 @@ select{background:#2c2a28;border:1px solid #4a4540;border-radius:10px;height:34p
 .rsavetxt{display:flex;flex-direction:column;min-width:0}
 .rsavetxt b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
 .rsavetxt small{opacity:.65;font-size:12px}
+/* cover decorating: the book stays in view while you browse stickers */
+.decsearch{width:100%;height:40px;border-radius:12px;border:1px solid #4a4540;background:#2c2a28;color:inherit;padding:0 12px;margin-bottom:8px;font:inherit}
+.decpick .catchip.mine{border-style:dashed}
+@media (max-width:999px){.sheet.decorate .decleft{position:sticky;top:-10px;z-index:2;background:#232120;padding-bottom:6px;margin:0 -18px;padding-left:18px;padding-right:18px}
+  .sheet.decorate .decleft .hint{display:none}.sheet.decorate .decstage{min-height:0;max-height:38dvh;padding:12px 8px}.sheet.decorate .decfront{width:min(240px,62vw,19dvh)}}
+@media (min-width:1000px){
+  .sheet.decorate{width:min(1120px,94vw);top:50%;transform:translate(-50%,-50%);max-height:92dvh;display:flex;flex-direction:column;overflow:hidden}
+  .sheet.decorate .declayout{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,460px);gap:20px;min-height:0;flex:1}
+  .sheet.decorate .decleft{display:flex;flex-direction:column;min-height:0}
+  .sheet.decorate .decleft .decstage{flex:1;min-height:420px}
+  .sheet.decorate .decright{overflow:auto;min-height:0;padding-right:4px}
+}
