@@ -1120,3 +1120,20 @@ select{background:#2c2a28;border:1px solid #4a4540;border-radius:10px;height:34p
   .sheet.decorate .decleft .decstage{flex:1;min-height:420px}
   .sheet.decorate .decright{overflow:auto;min-height:0;padding-right:4px}
 }
+/* cover label styles */
+.cplate.ps-stitched{outline:2px dashed rgba(0,0,0,.28);outline-offset:-7px;border-radius:8px}
+.cplate.ps-oval{border-radius:999px;padding-left:26px;padding-right:26px;outline:1.5px solid rgba(0,0,0,.2);outline-offset:-6px;box-shadow:0 0 0 3px rgba(255,255,255,.35)}
+.cplate.ps-tag{outline:none;clip-path:polygon(16% 0,100% 0,100% 100%,16% 100%,0 50%);padding-left:34px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.1)}
+.cplate.ps-tag::before{content:'';position:absolute;left:9%;top:50%;width:9px;height:9px;margin-top:-4.5px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.25)}
+.cplate.ps-ribbon{outline:none;clip-path:polygon(0 0,100% 0,93% 50%,100% 100%,0 100%,7% 50%);padding-left:30px;padding-right:30px;box-shadow:inset 0 3px 0 rgba(255,255,255,.25),inset 0 -3px 0 rgba(0,0,0,.12)}
+.cplate.ps-taped{outline:none;rotate:-2.5deg;box-shadow:0 4px 10px rgba(0,0,0,.22);border-radius:2px}
+.cplate.ps-taped::after{content:'';position:absolute;left:50%;top:-9px;width:46px;height:16px;margin-left:-23px;background:rgba(255,248,230,.65);rotate:3deg;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.cplate.ps-stitched.drag,.cplate.ps-oval.drag{outline-style:dashed}
+.splate.ps-stitched{outline:1.5px dashed rgba(0,0,0,.3);outline-offset:-4px}
+.splate.ps-oval{border-radius:999px}
+.splate.ps-tag,.splate.ps-ribbon{clip-path:polygon(0 8%,50% 0,100% 8%,100% 100%,0 100%)}
+.splate.ps-taped{rotate:-1.5deg;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.splate.ps-none{box-shadow:none}
+.cplate[class*="ps-"]{width:max-content;overflow-wrap:normal;word-break:normal}
+.cplate.ps-ribbon{padding-left:24px;padding-right:24px}
+.cplate.ps-oval{padding-left:22px;padding-right:22px}

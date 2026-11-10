@@ -13,6 +13,8 @@ import Room from './Room';
 export const COVER_COLORS = ['#4f8380', '#7a5c58', '#6e819c', '#8a9a6c', '#b98a5e', '#9d7aa8', '#c97d8a', '#3f4a5c', '#d4b48b', '#5b6e52'];
 const PLATE_COLORS = ['#fbf4ea', '#ffffff', '#e8dcc6', '#d4b48b', '#f5d7dd', '#dbe7fa', '#dfe6d4', '#ece4f0', '#3d3121', '#1f1d1b'];
 const plateOf = (b) => b.plate || mix(b.color, 0.72);
+// Label styles for the cover (the spine follows along). 'none' hides the front label; the spine then shows just the name.
+export const LABEL_STYLES = [['classic', 'Classic'], ['stitched', 'Stitched'], ['oval', 'Oval'], ['tag', 'Tag'], ['ribbon', 'Ribbon'], ['taped', 'Taped note'], ['none', 'No label']];
 // Cover looks: a print/texture over the color, metal corners, an elastic band, ribbon color, stitched edge.
 export const PATTERNS = [['', 'Plain'], ['linen', 'Linen'], ['leather', 'Leather'], ['dots', 'Dots'], ['grid', 'Grid'], ['stripes', 'Stripes'], ['gingham', 'Gingham'], ['stars', 'Stars'], ['floral', 'Floral'], ['hearts', 'Hearts'], ['waves', 'Waves']];
 const CORNERS = [['', 'None'], ['#d9b45f', 'Gold'], ['#c9ccd2', 'Silver'], ['#e0a39a', 'Rose gold'], ['#6b4a35', 'Leather']];
@@ -39,7 +41,7 @@ function Spine({ b, selected, onClick, edit, onPointerDown, moving }) {
     <Tag className={'spine' + (selected ? ' up' : '') + (dec.stitch ? ' stitch' : '') + (moving ? ' moving' : '')} data-book={b.id} style={{ height: h, width: w, '--c': b.color, ...(moving ? { transform: `translate(${moving.dx}px, ${moving.dy}px) rotate(-4deg)` } : {}) }} onClick={onClick} onPointerDown={onPointerDown} aria-label={edit ? undefined : 'Open ' + b.name}>
       {dec.pattern && <span className={'cpat p-' + dec.pattern} />}
       <span className="sband" />
-      <span className={'splate' + (edit ? ' drag' : '')} style={{ background: plateOf(b), color: ink, top: (dec.splateY || 0) + '%' }}
+      <span className={'splate ps-' + (dec.pstyle || 'classic') + (edit ? ' drag' : '')} style={{ background: dec.pstyle === 'none' ? 'transparent' : plateOf(b), color: dec.pstyle === 'none' ? inkOn(b.color) : ink, top: (dec.splateY || 0) + '%' }}
         onPointerDown={edit ? (e) => edit.onPlate(e, e.currentTarget.parentElement) : undefined}><span>{b.name || 'Untitled'}</span></span>
       <span className="sband low" />
       <Decor items={dec.spine} sel={edit?.sel} onDown={edit && ((e, d) => edit.onItem(e, d, e.currentTarget.parentElement))} />
@@ -55,8 +57,8 @@ export function Cover({ b, big, edit }) {
       {dec.pattern && <span className={'cpat p-' + dec.pattern} />}
       <span className="cspine" />
       <span className="cyear">{b.label || new Date().getFullYear()}</span>
-      <span className={'cplate' + (edit ? ' drag' : '')} style={{ background: plateOf(b), color: inkOn(plateOf(b)), ...(pl ? { left: pl.x + '%', top: pl.y + '%', bottom: 'auto', transform: 'translate(-50%,-50%)' } : {}) }}
-        onPointerDown={edit ? (e) => edit.onPlate(e, e.currentTarget.parentElement) : undefined}>{b.name || 'Untitled'}</span>
+      {dec.pstyle !== 'none' && <span className={'cplate ps-' + (dec.pstyle || 'classic') + (edit ? ' drag' : '')} style={{ background: plateOf(b), color: inkOn(plateOf(b)), ...(pl ? { left: pl.x + '%', top: pl.y + '%', bottom: 'auto', transform: 'translate(-50%,-50%)' } : {}) }}
+        onPointerDown={edit ? (e) => edit.onPlate(e, e.currentTarget.parentElement) : undefined}>{b.name || 'Untitled'}</span>}
       <span className="ribbons"><i /><i /></span>
       {dec.corners && <><span className="ccorner tr" style={{ '--k': dec.corners }} /><span className="ccorner br" style={{ '--k': dec.corners }} /></>}
       <Decor items={dec.front} sel={edit?.sel} onDown={edit && ((e, d) => edit.onItem(e, d, e.currentTarget.parentElement))} />
@@ -67,7 +69,7 @@ export function Cover({ b, big, edit }) {
 }
 
 // Decorate screen: drag the label, add stickers to the front or spine, move/resize/turn them.
-export function Decorate({ user, b, onDone, onClose }) {
+export function Decorate({ user, b, onDone, onClose, catOrder }) {
   const [dec, setDec] = useState(() => ({ front: [], spine: [], ...(b.decor || {}) }));
   const [side, setSide] = useState('front');
   const [sel, setSel] = useState(null);
@@ -75,7 +77,6 @@ export function Decorate({ user, b, onDone, onClose }) {
   const [pack, setPack] = useState('all');
   const [q, setQ] = useState('');
   const [stickers] = useStickers(user);
-  const [settings] = useSettings(user);
   const list = dec[side] || [];
   const cur = list.find((d) => d.id === sel);
   const setList = (fn) => setDec((d) => ({ ...d, [side]: fn(d[side] || []) }));
@@ -99,7 +100,7 @@ export function Decorate({ user, b, onDone, onClose }) {
   const preview = { ...b, decor: dec };
   const mine = stickers;
   // Sticker picker: All, the built-in packs, then your own folders (in your order). Search looks inside the folder you're in.
-  const order = settings.stickerCatOrder || [];
+  const order = catOrder || [];
   const myCats = [...new Set(mine.map((s) => s.category || 'My stickers'))].sort((a, c) => (order.indexOf(a) + 1 || 999) - (order.indexOf(c) + 1 || 999));
   const packPool = (p) => p.items.map((k) => packItem(k, p.name));
   const pool = pack === 'all' ? [...mine, ...PACKS.flatMap(packPool)] : pack.startsWith('my:') ? mine.filter((s) => (s.category || 'My stickers') === pack.slice(3)) : packPool(PACKS.find((p) => p.name === pack) || PACKS[0]);
@@ -163,7 +164,9 @@ export function Decorate({ user, b, onDone, onClose }) {
             {found.length > LIMIT && <p className="hint">Showing {LIMIT} of {found.length} — search to narrow it down.</p>}
           </div>
         )}
-        <div className="prow" style={{ marginTop: 14 }}>
+        <div className="lbl" style={{ marginTop: 14 }}>LABEL</div>
+        <div className="catrow wrap">{LABEL_STYLES.map(([v, l]) => <button key={v} className={'catchip' + ((dec.pstyle || 'classic') === v ? ' on' : '')} onClick={() => setDec((d) => ({ ...d, pstyle: v === 'classic' ? undefined : v }))}>{l}</button>)}</div>
+        <div className="prow" style={{ marginTop: 10 }}>
           <button className="mini" onClick={() => { setDec((d) => ({ ...d, plate: undefined, splateY: 0 })); }}>Reset label spot</button>
           <span style={{ flex: 1 }} />
           <button className="mini" onClick={onClose}>Cancel</button>
@@ -183,10 +186,10 @@ function Opt({ on, onClick, children, label, style }) {
   return <button className={'copt' + (on ? ' on' : '')} onClick={onClick} aria-label={label} title={label} style={style}>{children}</button>;
 }
 
-function BookForm({ user, initial, onSave, onDelete, onClose }) {
+function BookForm({ user, initial, onSave, onDelete, onClose, catOrder }) {
   const [b, setB] = useState(initial);
   const [deco, setDeco] = useState(false);
-  if (deco) return <Decorate user={user} b={b} onDone={(decor) => setB({ ...b, decor })} onClose={() => setDeco(false)} />;
+  if (deco) return <Decorate user={user} b={b} catOrder={catOrder} onDone={(decor) => setB({ ...b, decor })} onClose={() => setDeco(false)} />;
   const isNew = !initial.id;
   const d = b.decor || {};
   const setD = (p) => setB({ ...b, decor: { ...d, ...p } });
@@ -343,7 +346,7 @@ export default function Shelf({ user, books, api, onOpen }) {
         </>
       )}
       {form && (
-        <BookForm user={user} initial={form} onClose={() => setForm(null)}
+        <BookForm user={user} initial={form} catOrder={settings.stickerCatOrder} onClose={() => setForm(null)}
           onSave={(b) => { if (b.id) api.update(b.id, { name: b.name, kind: b.kind, color: b.color, charm: b.charm, label: b.label || null, plate: b.plate || null, decor: b.decor || {} }); else setSel(api.add(b)); }}
           onDelete={() => { api.remove(form.id); setSel(null); }} />
       )}

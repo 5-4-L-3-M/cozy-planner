@@ -58,6 +58,8 @@ const CHANGES = [
     'Sticker search right in the sticker panel. Sticker library (Stickers → Library): folders, search, favorites ★, recent, rename, bigger/smaller thumbnails. Click to pick, Ctrl-click to add, Shift-click for a range, or drag a box; drag picked stickers onto a folder to move them all.',
     'Drag PNGs, sticker sheets or a .zip onto the sticker panel, the library, or a folder — or paste with Ctrl+V. Imports keep going if you close the panel; no limit on how many.',
     'Drag or paste an image onto the page to drop it right on the page.',
+    'Cover labels: pick Classic, Stitched, Oval, Tag, Ribbon, Taped note, or No label in Decorate (the spine follows along; with No label the spine just shows the name).',
+    'Fixed: Decorate on a book could open to a black screen.',
     'Decorating a book cover is easier: search stickers (by name, color, style…), pick from All, your own sticker folders or the built-in packs, and the book stays in view while you browse — side by side on PC, pinned at the top on phones.',
     'Save your rooms: in Decorate room → Room tab, “＋ Save this room” keeps everything (style, colors, window, weather tag, decor, bookshelf spot and shelf color). Tap a saved room to load it, or Update / rename / delete it. Saved rooms sync to all your devices.',
     'Digital clocks: tap one while decorating to change its glow (number) color — any color you like, separate from the clock’s body color.',

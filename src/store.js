@@ -34,7 +34,7 @@ export function useSettings(user) {
 
   useEffect(() => {
     sb.from('settings').select('data').maybeSingle().then(({ data }) => data && setS(merge(data.data)));
-    const ch = sb.channel('settings-' + user.id)
+    const ch = sb.channel('settings-' + user.id + '-' + Math.random().toString(36).slice(2))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, (p) => {
         if (!pending.current && p.new?.data) setS(merge(p.new.data));
       })
@@ -109,7 +109,7 @@ export function useWeek(ws, user, nbId) {
       if (live) { setTasks(t.data || []); setPages(pg); }
     })();
 
-    const ch = sb.channel('week-' + ws)
+    const ch = sb.channel('week-' + ws + '-' + Math.random().toString(36).slice(2))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, (p) => {
         if (p.eventType === 'DELETE') return setTasks((s) => s.filter((x) => x.id !== p.old.id));
         const row = p.new;
@@ -247,7 +247,7 @@ export function useStrokes(pageId) {
     let live = true;
     sb.from('strokes').select('*').eq('page_id', pageId).order('created_at')
       .then(({ data }) => live && setStrokes(data || []));
-    const ch = sb.channel('strokes-' + pageId)
+    const ch = sb.channel('strokes-' + pageId + '-' + Math.random().toString(36).slice(2))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'strokes', filter: `page_id=eq.${pageId}` },
         (p) => setStrokes((s) => (s.some((x) => x.id === p.new.id) ? s : [...s, p.new])))
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'strokes', filter: `page_id=eq.${pageId}` },
@@ -316,7 +316,7 @@ export function useNotebooks(user) {
   const [books, setBooks] = useState(null);
   useEffect(() => {
     sb.from('notebooks').select('*').order('position').then(({ data }) => setBooks(data || []));
-    const ch = sb.channel('notebooks-' + user.id)
+    const ch = sb.channel('notebooks-' + user.id + '-' + Math.random().toString(36).slice(2))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notebooks' }, (p) => {
         if (p.eventType === 'DELETE') return setBooks((s) => (s || []).filter((x) => x.id !== p.old.id));
         setBooks((s) => [...(s || []).filter((x) => x.id !== p.new.id), p.new].sort((a, b) => a.position - b.position));
@@ -371,7 +371,7 @@ export function useMonth(monthStart, gridStart, gridEnd, nbId, enabled, withCove
       }
     })();
     ensureRecurring(nbId, gridStart, gridEnd).catch(() => {}).then(loadTasks);
-    const ch = sb.channel('month-' + monthStart + nbId)
+    const ch = sb.channel('month-' + monthStart + nbId + '-' + Math.random().toString(36).slice(2))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => loadTasks())
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pages' }, (p) => { if (!live) return; setPage((cur) => (cur && cur.id === p.new.id ? p.new : cur)); setCover((cur) => (cur && cur.id === p.new.id ? p.new : cur)); })
       .subscribe();
@@ -410,7 +410,7 @@ export function useDecor(ws, nbId, create) {
   // Changes made on another device (like day spacing) show up here live.
   useEffect(() => {
     if (!pg?.id) return;
-    const ch = sb.channel('decor-' + pg.id)
+    const ch = sb.channel('decor-' + pg.id + '-' + Math.random().toString(36).slice(2))
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pages', filter: `id=eq.${pg.id}` }, (p) => setPg((o) => (o && o.id === p.new.id ? { ...o, content: p.new.content } : o)))
       .subscribe();
     return () => { sb.removeChannel(ch); };

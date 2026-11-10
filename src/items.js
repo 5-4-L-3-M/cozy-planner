@@ -13,7 +13,7 @@ export function useItems(pageId) {
     if (!pageId) return;
     let live = true;
     sb.from('items').select('*').eq('page_id', pageId).order('z').then(({ data }) => live && setItems(data || []));
-    const ch = sb.channel('items-' + pageId)
+    const ch = sb.channel('items-' + pageId + '-' + Math.random().toString(36).slice(2))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'items', filter: `page_id=eq.${pageId}` }, (p) => {
         if (p.eventType === 'DELETE') return setItems((s) => s.filter((x) => x.id !== p.old.id));
         setItems((s) => [...s.filter((x) => x.id !== p.new.id), p.new]);
@@ -42,7 +42,7 @@ export function useStickers(user) {
   const [stickers, setStickers] = useState([]);
   useEffect(() => {
     sb.from('stickers').select('*').order('position').then(({ data }) => setStickers(data || []));
-    const ch = sb.channel('stickers-' + user.id)
+    const ch = sb.channel('stickers-' + user.id + '-' + Math.random().toString(36).slice(2))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'stickers' }, (p) => {
         if (p.eventType === 'DELETE') return setStickers((s) => s.filter((x) => x.id !== p.old.id));
         setStickers((s) => [...s.filter((x) => x.id !== p.new.id), p.new].sort((a, b) => a.position - b.position));

@@ -18,7 +18,7 @@ export function useHeaderArt(nbId) {
       if (live) setMap(Object.fromEntries((data || []).map((r) => [r.key, r.art])));
     });
     load();
-    const ch = sb.channel('headers-' + nbId).on('postgres_changes', { event: '*', schema: 'public', table: 'header_art' }, load).subscribe();
+    const ch = sb.channel('headers-' + nbId + '-' + Math.random().toString(36).slice(2)).on('postgres_changes', { event: '*', schema: 'public', table: 'header_art' }, load).subscribe();
     return () => { live = false; sb.removeChannel(ch); };
   }, [nbId]);
   const api = {
