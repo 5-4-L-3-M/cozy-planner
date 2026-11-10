@@ -1111,14 +1111,17 @@ select{background:#2c2a28;border:1px solid #4a4540;border-radius:10px;height:34p
 /* cover decorating: the book stays in view while you browse stickers */
 .decsearch{width:100%;height:40px;border-radius:12px;border:1px solid #4a4540;background:#2c2a28;color:inherit;padding:0 12px;margin-bottom:8px;font:inherit}
 .decpick .catchip.mine{border-style:dashed}
-@media (max-width:999px){.sheet.decorate .decleft{position:sticky;top:-10px;z-index:2;background:#232120;padding-bottom:6px;margin:0 -18px;padding-left:18px;padding-right:18px}
-  .sheet.decorate .decleft .hint{display:none}.sheet.decorate .decstage{min-height:0;max-height:38dvh;padding:12px 8px}.sheet.decorate .decfront{width:min(240px,62vw,19dvh)}}
-@media (min-width:1000px){
-  .sheet.decorate{width:min(1120px,94vw);top:50%;transform:translate(-50%,-50%);max-height:92dvh;display:flex;flex-direction:column;overflow:hidden}
-  .sheet.decorate .declayout{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,460px);gap:20px;min-height:0;flex:1}
+/* phones: book pinned on top while stickers scroll underneath */
+@media (max-width:759px){.sheet.decorate .decleft{position:sticky;top:-10px;z-index:2;background:#232120;padding-bottom:6px;margin:0 -18px;padding-left:18px;padding-right:18px}
+  .sheet.decorate .decleft .hint{display:none}.sheet.decorate .decstage{min-height:0;padding:10px 8px}.sheet.decorate .decfront{width:min(240px,62vw,18dvh)}}
+/* tablets & PC: big book on the left, tools on the right */
+@media (min-width:760px){
+  .sheet.decorate{left:50%;right:auto;bottom:auto;top:50%;width:min(1240px,96vw);transform:translate(-50%,-50%);max-height:94dvh;height:94dvh;border-radius:22px;border:1px solid #4a4540;display:flex;flex-direction:column;overflow:hidden;padding-bottom:16px}
+  .sheet.decorate .declayout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(340px,1fr);gap:18px;min-height:0;flex:1}
   .sheet.decorate .decleft{display:flex;flex-direction:column;min-height:0}
-  .sheet.decorate .decleft .decstage{flex:1;min-height:420px}
-  .sheet.decorate .decright{overflow:auto;min-height:0;padding-right:4px}
+  .sheet.decorate .decleft .decstage{flex:1;min-height:0;padding:18px}
+  .sheet.decorate .decfront{width:min(420px,40vw,calc((94dvh - 190px) * .72))}
+  .sheet.decorate .decright{overflow:auto;min-height:0;padding-right:6px}
 }
 /* cover label styles */
 .cplate.ps-stitched{outline:2px dashed rgba(0,0,0,.28);outline-offset:-7px;border-radius:8px}
@@ -1137,3 +1140,12 @@ select{background:#2c2a28;border:1px solid #4a4540;border-radius:10px;height:34p
 .cplate[class*="ps-"]{width:max-content;overflow-wrap:normal;word-break:normal}
 .cplate.ps-ribbon{padding-left:24px;padding-right:24px}
 .cplate.ps-oval{padding-left:22px;padding-right:22px}
+.dectools{display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
+.dectools .decsearch{flex:1 1 180px;margin:0;min-width:0}
+.decfolder{flex:0 1 200px;height:40px;border-radius:12px;border:1px solid #4a4540;background:#2c2a28;color:inherit;padding:0 10px;font:inherit;min-width:0}
+.dectile{display:flex;gap:4px}
+.declbl{margin:8px 0 4px;font-size:11px}
+.decrecent{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.decrecent .sttile{flex:0 0 72px;height:72px}
+.decpick .stgrid{grid-template-columns:repeat(auto-fill,minmax(var(--tile,104px),1fr));gap:8px;margin-top:4px}
+.decpick .stgrid .sttile{height:var(--tile,104px);padding:6px}

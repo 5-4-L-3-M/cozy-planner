@@ -95,7 +95,7 @@ export function Decorate({ user, b, onDone, onClose, catOrder }) {
   const textA = (t) => 34 / Math.max(40, t.length * 15 + 16);
   const add = (st, a = 1, s0) => {
     const d = { id: crypto.randomUUID(), st, a, x: 50, y: side === 'front' ? 40 : 30, s: s0 || (side === 'front' ? 26 : 80), r: 0 };
-    setList((l) => [...l, d]); setSel(d.id); setPick(false);
+    setList((l) => [...l, d]); setSel(d.id);
   };
   const preview = { ...b, decor: dec };
   const mine = stickers;
@@ -106,6 +106,15 @@ export function Decorate({ user, b, onDone, onClose, catOrder }) {
   const pool = pack === 'all' ? [...mine, ...PACKS.flatMap(packPool)] : pack.startsWith('my:') ? mine.filter((s) => (s.category || 'My stickers') === pack.slice(3)) : packPool(PACKS.find((p) => p.name === pack) || PACKS[0]);
   const found = q.trim() ? pool.filter((s) => matches(s, q)) : pool;
   const LIMIT = 240, shown = found.slice(0, LIMIT);
+  // Picker conveniences, remembered on this device: tile size and recently used stickers.
+  const ls = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+  const [tile, setTile] = useState(() => ls('decTile', innerWidth < 760 ? 84 : 104));
+  const [recent, setRecent] = useState(() => ls('decRecent', []));
+  const sizeTile = (dir) => setTile((t) => { const n = Math.max(70, Math.min(170, t + dir * 22)); try { localStorage.setItem('decTile', n); } catch { /* fine */ } return n; });
+  const use = (st, a) => {
+    add(st, a);
+    setRecent((r) => { const n = [{ st, a }, ...r.filter((x) => JSON.stringify(x.st) !== JSON.stringify(st))].slice(0, 16); try { localStorage.setItem('decRecent', JSON.stringify(n)); } catch { /* fine */ } return n; });
+  };
   return (
     <>
       <div className="sheet-bg" />
@@ -148,16 +157,29 @@ export function Decorate({ user, b, onDone, onClose, catOrder }) {
         )}
         {pick && (
           <div className="decpick">
-            <input className="decsearch" value={q} onChange={(e) => setQ(e.target.value)} placeholder={pack === 'all' ? 'Search all stickers (name, color, style…)' : 'Search this folder…'} aria-label="Search stickers" />
-            <div className="catrow wrap">
-              <button className={'catchip' + (pack === 'all' ? ' on' : '')} onClick={() => setPack('all')}>All</button>
-              {myCats.map((c) => <button key={'my:' + c} className={'catchip mine' + (pack === 'my:' + c ? ' on' : '')} onClick={() => setPack('my:' + c)}>{c}</button>)}
-              {PACKS.map((p) => <button key={p.name} className={'catchip' + (pack === p.name ? ' on' : '')} onClick={() => setPack(p.name)}>{p.name}</button>)}
+            <div className="dectools">
+              <input className="decsearch" value={q} onChange={(e) => setQ(e.target.value)} placeholder={pack === 'all' ? 'Search all stickers…' : 'Search this folder…'} aria-label="Search stickers" />
+              {q && <button className="mini" onClick={() => setQ('')} aria-label="Clear search">✕</button>}
+              <select className="decfolder" value={pack} onChange={(e) => setPack(e.target.value)} aria-label="Sticker folder">
+                <option value="all">All stickers</option>
+                {myCats.length > 0 && <optgroup label="My folders">{myCats.map((c) => <option key={'my:' + c} value={'my:' + c}>{c}</option>)}</optgroup>}
+                <optgroup label="Built-in packs">{PACKS.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}</optgroup>
+              </select>
+              <span className="dectile">
+                <button className="mini" onClick={() => sizeTile(-1)} aria-label="Smaller stickers" title="Smaller tiles">−</button>
+                <button className="mini" onClick={() => sizeTile(1)} aria-label="Bigger stickers" title="Bigger tiles">＋</button>
+              </span>
             </div>
-            <div className="stgrid">
+            {!q && pack === 'all' && recent.length > 0 && <>
+              <div className="lbl declbl">RECENT</div>
+              <div className="decrecent">{recent.map((x, i) => <button key={i} className="sttile" onClick={() => use(x.st, x.a)} aria-label="Recent sticker"><Art st={x.st} /></button>)}</div>
+              <div className="lbl declbl">ALL STICKERS · {found.length}</div>
+            </>}
+            {(q || pack !== 'all') && <div className="lbl declbl">{found.length} sticker{found.length === 1 ? '' : 's'}{pack !== 'all' ? ' in ' + (pack.startsWith('my:') ? pack.slice(3) : pack) : ''}</div>}
+            <div className="stgrid" style={{ '--tile': tile + 'px' }}>
               {shown.map((s, i) => {
                 const st = stOf(s);
-                return <button key={s.id + ':' + i} className="sttile" onClick={() => add(st, s.pack ? 1 : (s.h || 1) / (s.w || 1))} aria-label={s.name || s.data?.name || 'Sticker'} title={s.name || s.data?.name || ''}><Art st={st} /></button>;
+                return <button key={s.id + ':' + i} className="sttile" onClick={() => use(st, s.pack ? 1 : (s.h || 1) / (s.w || 1))} aria-label={s.name || s.data?.name || 'Sticker'} title={s.name || s.data?.name || ''}><Art st={st} /></button>;
               })}
             </div>
             {!found.length && <p className="hint">No stickers match “{q}”{pack !== 'all' ? ' in this folder — try All' : ''}.</p>}
