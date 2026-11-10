@@ -580,18 +580,21 @@ const CALS = {
 Object.values(CALS).forEach((d) => { d.live = true; });
 Object.assign(LIVE, CALS);
 Object.assign(LIVE, CLOCKS);
-function ThemedClock({ k, now, hue }) {
+function ThemedClock({ k, now, hue, glow }) {
   const d = CLOCKS[k], h = now.getHours(), m = now.getMinutes(), sec = now.getSeconds();
   if (d.dig) {
-    const [x, y, fs] = d.scr, hh = ((h + 11) % 12) + 1;
-    return recolor(
+    const [x, y, fs] = d.scr, hh = ((h + 11) % 12) + 1, col = glow || d.col;
+    const digits = (<g>
+      <text x={x} y={y} textAnchor="middle" fontSize={fs} fontWeight={d.thin ? 300 : 700} fill={col} style={{ fontFamily: d.font, letterSpacing: '.5px', filter: d.glow ? `drop-shadow(0 0 2px ${col})` : undefined }}>
+        {String(hh).padStart(2, '0')}<tspan opacity={sec % 2 ? 0.3 : 1}>:</tspan>{String(m).padStart(2, '0')}
+      </text>
+      <text x={d.ap[0]} y={d.ap[1]} textAnchor="end" fontSize={Math.max(3.4, fs * 0.3)} fontWeight="700" fill={col} opacity=".7" style={{ fontFamily: 'Nunito, system-ui, sans-serif' }}>{h < 12 ? 'AM' : 'PM'}</text>
+    </g>);
+    // A picked glow color wins; otherwise the digits follow the clock's color.
+    return (
       <svg viewBox={`0 0 ${d.w} ${d.h}`} width="100%" height="100%" overflow="visible" aria-label={`${d.name}: ${hh}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`}>
-        {d.body()}
-        <text x={x} y={y} textAnchor="middle" fontSize={fs} fontWeight={d.thin ? 300 : 700} fill={d.col} style={{ fontFamily: d.font, letterSpacing: '.5px', filter: d.glow ? `drop-shadow(0 0 2px ${d.col})` : undefined }}>
-          {String(hh).padStart(2, '0')}<tspan opacity={sec % 2 ? 0.3 : 1}>:</tspan>{String(m).padStart(2, '0')}
-        </text>
-        <text x={d.ap[0]} y={d.ap[1]} textAnchor="end" fontSize={Math.max(3.4, fs * 0.3)} fontWeight="700" fill={d.col} opacity=".7" style={{ fontFamily: 'Nunito, system-ui, sans-serif' }}>{h < 12 ? 'AM' : 'PM'}</text>
-      </svg>, hue
+        {glow ? <>{recolor(d.body(), hue)}{digits}</> : recolor(<g>{d.body()}{digits}</g>, hue)}
+      </svg>
     );
   }
   const [cx, cy, r] = d.c;
@@ -629,22 +632,22 @@ function useNow() {
   return n;
 }
 const shadeOf = (hex, k) => { const n = parseInt(hex.slice(1), 16), f = (v) => Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k); return '#' + [n >> 16, (n >> 8) & 255, n & 255].map((v) => f(v).toString(16).padStart(2, '0')).join(''); };
-export function LiveClock({ k, tint, hue }) {
+export function LiveClock({ k, tint, hue, glow }) {
   const now = useNow();
-  if (CLOCKS[k]) return <ThemedClock k={k} now={now} hue={hue} />;
+  if (CLOCKS[k]) return <ThemedClock k={k} now={now} hue={hue} glow={glow} />;
   if (CALS[k]) { const d = CALS[k]; return <svg viewBox={`0 0 ${d.w} ${d.h}`} width="100%" height="100%" overflow="visible" aria-label={`${d.name}: ${now.toDateString()}`}>{recolor(d.draw(now, tint), hue, d.main)}</svg>; }
   const h = now.getHours(), m = now.getMinutes(), sec = now.getSeconds();
   if (k === 'liveDigital') {
-    const c = tint || '#f3eee6';
+    const c = tint || '#f3eee6', gl = glow || '#ffd27a';
     return (
       <svg viewBox="0 0 78 40" width="100%" height="100%" overflow="visible" aria-label={`Time ${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`}>
         <rect x="2" y="2" width="74" height="34" rx="9" fill={c} stroke="#3d3121" strokeWidth="1.6" />
         <rect x="4" y="30" width="70" height="5" rx="2.5" fill={shadeOf(c, -0.15)} />
         <rect x="9" y="7" width="60" height="21" rx="5" fill="#2b2a2a" stroke="#3d3121" strokeWidth="1.2" />
-        <text x="38" y="23.5" textAnchor="middle" fontSize="15" fontWeight="700" fill="#ffd27a" style={{ fontFamily: "'Patrick Hand', monospace", letterSpacing: '1px' }}>
+        <text x="38" y="23.5" textAnchor="middle" fontSize="15" fontWeight="700" fill={gl} style={{ fontFamily: "'Patrick Hand', monospace", letterSpacing: '1px', filter: `drop-shadow(0 0 1.5px ${gl})` }}>
           {((h + 11) % 12) + 1}<tspan opacity={sec % 2 ? 0.25 : 1}>:</tspan>{String(m).padStart(2, '0')}
         </text>
-        <text x="64" y="14" textAnchor="end" fontSize="5.5" fill="#ffd27a" opacity=".8">{h < 12 ? 'AM' : 'PM'}</text>
+        <text x="64" y="14" textAnchor="end" fontSize="5.5" fill={gl} opacity=".8">{h < 12 ? 'AM' : 'PM'}</text>
         <rect x="8" y="36" width="8" height="3" rx="1.5" fill="#3d3121" /><rect x="62" y="36" width="8" height="3" rx="1.5" fill="#3d3121" />
       </svg>
     );
@@ -682,6 +685,7 @@ function SwRow({ list, value, onPick, label, bgOf }) {
     </span>
   );
 }
+const GLOW_COLORS = ['#ffd27a', '#ffcf8a', '#fff6d8', '#ff9ec2', '#ff6b6b', '#c9a6ff', '#9d7bff', '#8fd3ff', '#5ef0e0', '#9dff9d', '#c25a78', '#3b4a35', '#3a3836'];
 const ANY_COLORS = ['#f2b8c6', '#e391a6', '#c96f4a', '#d9a93f', '#efe4cc', '#a9b89a', '#5e8a52', '#8fa8bf', '#3f4a6a', '#b9a3cf', '#5b3a5e', '#7a2e35', '#3a3633', '#f4f1ea'];
 function Swatches({ list, value, onPick }) {
   return (
@@ -818,7 +822,7 @@ export default function Room({ settings, update, children, header, deps }) {
       <div key={it.id} className={'rdec' + (edit ? ' edit' : '') + (sel === it.id && edit ? ' on' : '')} title={edit ? D(it.k).name : undefined}
         style={{ left: p.left + d.dx + (drag?.id === 'bc' && touching.current.has(it.id) ? bcLive - bcx : 0), top: p.top + d.dy, width: p.w, height: p.h, zIndex: (it.a.t === 'wall' ? 1 : 3) + (it.z || 0) / 1000 }}
         onPointerDown={(e) => dragOn(e, it.id, (dx, dy) => { const L = p.left + dx, T = p.top + dy; patch(it.id, { a: anchorAt(L + p.w / 2, T + p.h, T, b, it) }); })}>
-        {D(it.k).live ? <LiveClock k={it.k} tint={it.tint} hue={it.hue} /> : it.a.t === 'case' ? <div className="rcase2"><DecorArt k={it.k} light={it.light} pot={it.pot} tint={it.tint} acc={it.acc} wax={it.wax} hue={it.hue} /><DecorArt k={it.k} flip light={it.light} pot={it.pot} tint={it.tint} acc={it.acc} wax={it.wax} hue={it.hue} /></div> : <DecorArt k={it.k} flip={it.flip} pot={it.pot} tint={it.tint} acc={it.acc} light={it.light} wax={it.wax} hue={it.hue} />}
+        {D(it.k).live ? <LiveClock k={it.k} tint={it.tint} hue={it.hue} glow={it.glow} /> : it.a.t === 'case' ? <div className="rcase2"><DecorArt k={it.k} light={it.light} pot={it.pot} tint={it.tint} acc={it.acc} wax={it.wax} hue={it.hue} /><DecorArt k={it.k} flip light={it.light} pot={it.pot} tint={it.tint} acc={it.acc} wax={it.wax} hue={it.hue} /></div> : <DecorArt k={it.k} flip={it.flip} pot={it.pot} tint={it.tint} acc={it.acc} light={it.light} wax={it.wax} hue={it.hue} />}
       </div>
     );
   });
@@ -886,6 +890,7 @@ export default function Room({ settings, update, children, header, deps }) {
           {D(cur.k)?.tints && <SwRow label="Color" list={FURN_COLORS} value={cur.tint} onPick={(c) => patch(cur.id, { tint: c })} />}
           {D(cur.k)?.fab && <SwRow label="Color" list={RUG_COLORS} value={cur.tint} onPick={(c) => patch(cur.id, { tint: c })} />}
           {D(cur.k)?.lights && <SwRow label="Lights" list={LIGHT_COLORS} value={cur.light} onPick={(c) => patch(cur.id, { light: c })} bgOf={(c) => (c === 'rainbow' ? 'conic-gradient(#ffb3c7,#ffe6a3,#b8e0a0,#a8d8ff,#c9b2f2,#ffb3c7)' : null)} />}
+          {(cur.k === 'liveDigital' || D(cur.k)?.dig) && <SwRow label="Glow" list={GLOW_COLORS} value={cur.glow} onPick={(c) => patch(cur.id, { glow: c })} />}
           {D(cur.k)?.wax && <SwRow label="Candle" list={WAX_COLORS} value={cur.wax} onPick={(c) => patch(cur.id, { wax: c })} />}
           {!D(cur.k)?.tints && !D(cur.k)?.fab && !D(cur.k)?.lights && !D(cur.k)?.wax && !D(cur.k)?.pots && <SwRow label="Color" list={ANY_COLORS} value={cur.hue} onPick={(c) => patch(cur.id, { hue: c })} />}
           {D(cur.k)?.accs && (

@@ -58,6 +58,7 @@ const CHANGES = [
     'Sticker search right in the sticker panel. Sticker library (Stickers → Library): folders, search, favorites ★, recent, rename, bigger/smaller thumbnails. Click to pick, Ctrl-click to add, Shift-click for a range, or drag a box; drag picked stickers onto a folder to move them all.',
     'Drag PNGs, sticker sheets or a .zip onto the sticker panel, the library, or a folder — or paste with Ctrl+V. Imports keep going if you close the panel; no limit on how many.',
     'Drag or paste an image onto the page to drop it right on the page.',
+    'Digital clocks: tap one while decorating to change its glow (number) color — any color you like, separate from the clock’s body color.',
     'Pick your own colors: tap almost anything in the room while decorating (clocks, calendars, vases, mugs, crystals, garlands, tapestries…) to recolor it, and every color row now ends with a rainbow dot to choose any color you like.',
     'New witchy moon month calendar: the whole month in gold on midnight, with tonight’s moon on top and little moons marking the new and full moon days.',
     '6 live calendars that always show today: bow tear-off (coquette), moon phase with tonight’s real moon (witchy), wooden hanging board (plant), flip desk calendar (minimal), sunny arch (boho), and a full month calendar with today circled (tap it to recolor).',
